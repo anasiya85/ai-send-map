@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI in Education and SEND</title>
+<style>
+  :root {
+    --root-color: #2d8a72;
+    --branch1-color: #3a7bd5;
+    --branch2-color: #9b59b6;
+    --sub1-color: #2980b9;
+    --sub2-color: #8e44ad;
+    --leaf-bg: #ffffff;
+    --leaf-border: #e0e0e0;
+    --tag-bg: #eaf4f1;
+    --tag-color: #2d8a72;
+    --link-color: #3a7bd5;
+    --bg: #f4f7fb;
+    --font: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: var(--font);
+    padding: 32px 16px 60px;
+    min-height: 100vh;
+  }
+
+  /* ── ROOT ── */
+  .root-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .root-node {
+    background: var(--root-color);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 14px 40px;
+    border-radius: 32px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 18px rgba(45,138,114,0.25);
+    cursor: default;
+    text-align: center;
+  }
+
+  /* ── CONNECTOR LINES ── */
+  .v-line {
+    width: 2px;
+    height: 28px;
+    background: #ccc;
+    margin: 0 auto;
+  }
+
+  .h-fork {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* ── MAIN BRANCHES ── */
+  .branch-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 50%;
+    padding: 0 12px;
+    position: relative;
+  }
+
+  .branch-col::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 28px;
+    background: #ccc;
+  }
+
+  /* horizontal connector between two branches */
+  .h-connector {
+    position: relative;
+    width: 100%;
+    height: 28px;
+    display: flex;
+    justify-content: center;
+  }
+  .h-connector::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    right: 0;
+    height: 2px;
+    background: #ccc;
+  }
+  .h-connector.left::before {
+    left: 0;
+    right: 50%;
+  }
+  .h-connector::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 2px;
+    height: 100%;
+    background: #ccc;
+  }
+
+  .branch-node {
+    padding: 10px 22px;
+    border-radius: 24px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .branch-node:hover { opacity: 0.88; transform: translateY(-1px); }
+  .branch-node .caret { font-size: 11px; transition: transform 0.3s; }
+  .branch-node.open .caret { transform: rotate(90deg); }
+
+  .b1 { background: var(--branch1-color); }
+  .b2 { background: var(--branch2-color); }
+
+  /* ── CHILDREN PANEL ── */
+  .children-panel {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.45s ease;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .children-panel.open { max-height: 4000px; }
+
+  /* ── SUB-BRANCH ── */
+  .sub-branch-row {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sub-node {
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: normal;
+    max-width: 280px;
+  }
+  .sub-node:hover { opacity: 0.88; transform: translateY(-1px); }
+  .sub-node .caret { font-size: 10px; transition: transform 0.3s; flex-shrink: 0; }
+  .sub-node.open .caret { transform: rotate(90deg); }
+
+  .s1 { background: #2980b9; }
+  .s2 { background: #8e44ad; }
+  .s3 { background: #16a085; }
+  .s4 { background: #e67e22; }
+  .s5 { background: #7b2fbe; }
+  .s6 { background: #c0392b; }
+
+  /* ── LEAF CARDS ── */
+  .leaves-grid {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s ease;
+    width: 100%;
+    padding: 0 4px;
+  }
+  .leaves-grid.open { max-height: 3000px; }
+
+  .leaves-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 0 4px;
+    justify-content: center;
+  }
+
+  .card {
+    background: white;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 14px 16px;
+    width: 200px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s, transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1a1a2e;
+    line-height: 1.4;
+  }
+
+  .card-org {
+    font-size: 11px;
+    color: #666;
+    font-style: italic;
+  }
+
+  .card-desc {
+    font-size: 11px;
+    color: #444;
+    line-height: 1.6;
+  }
+
+  .card-tech {
+    font-size: 10.5px;
+    background: #f0f4ff;
+    color: #3a5bd5;
+    padding: 3px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+
+  .card-link {
+    font-size: 10.5px;
+    color: var(--link-color);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    word-break: break-all;
+  }
+  .card-link:hover { text-decoration: underline; }
+
+  /* ── SMALL LAYOUT HELPERS ── */
+  .gap-top { margin-top: 4px; }
+
+  /* SUB-BRANCHES HORIZONTAL ROW */
+  .sub-row-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .sub-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 28px;
+    font-size: 12px;
+    color: #555;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+
+  /* Header */
+  .page-header {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .page-header p {
+    font-size: 12px;
+    color: #888;
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .h-fork { flex-direction: column; align-items: center; }
+    .branch-col { width: 100%; }
+    .card { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <p>CLICK ANY NODE TO EXPAND · HOVER CARDS FOR DETAILS</p>
+</div>
+
+<div class="root-wrapper">
+
+  <!-- ROOT -->
+  <div class="root-node">🤖 AI in Education and SEND</div>
+  <div class="v-line"></div>
+
+  <!-- H-FORK into 2 main branches -->
+  <div style="width:100%;display:flex;justify-content:center;position:relative;">
+    <div style="position:absolute;top:0;left:25%;right:25%;height:2px;background:#ccc;"></div>
+    <div style="position:absolute;top:0;left:25%;width:2px;height:28px;background:#ccc;"></div>
+    <div style="position:absolute;top:0;right:25%;width:2px;height:28px;background:#ccc;"></div>
+    <div style="height:28px;width:100%;"></div>
+  </div>
+
+  <div class="h-fork" style="align-items:flex-start;">
+
+    <!-- ══════════ BRANCH 1 ══════════ -->
+    <div class="branch-col">
+      <div class="branch-node b1" onclick="toggle(this)">
+        <span>📋 AI for Administrative Efficiency &amp; Case Management</span>
+        <span class="caret">▶</span>
+      </div>
+
+      <div class="children-panel">
+        <div class="v-line"></div>
+        <div class="sub-list">
+
+          <!-- Sub 1.1 -->
+          <div class="sub-row-wrap">
+            <div class="sub-node s1" onclick="toggle(this)">
+              <span>🔍 Predictive Risk Identification</span><span class="caret">▶</span>
+            </div>
+            <div class="leaves-grid">
+              <div class="leaves-inner">
+
+                <div class="card">
+                  <div class="card-title">EHCP Administrative Accelerator</div>
+                  <div class="card-org">Somerset Council</div>
+                  <div class="card-desc">Organising & processing information to reduce paperwork and improve response times for Education, Health, and Care Plans.</div>
+                  <span class="card-tech">AI / Document Processing</span>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">NEET Risk Forecasting</div>
+                  <div class="card-org">Bristol City Council</div>
+                  <div class="card-desc">Predicting risk of young people (4–16) becoming not in education, employment or training. Uses decision trees & regression on the Think Family Database.</div>
+                  <span class="card-tech">ML · XGBoost · TFD</span>
+                  <a class="card-link" href="https://www.gov.uk/algorithmic-transparency-records/bristol-city-council-neet-risk-assessment-tool" target="_blank">🔗 Transparency Record</a>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">Apprenticeship Withdrawal Analytics</div>
+                  <div class="card-org">DfE</div>
+                  <div class="card-desc">Determining probability & timing of students dropping out of vocational training. Uses XGBoost + DeepSurv (Cox Proportional Hazards).</div>
+                  <span class="card-tech">ML · Survival Analysis</span>
+                  <a class="card-link" href="https://www.gov.uk/algorithmic-transparency-records/dfe-apprenticeship-withdrawal-prediction" target="_blank">🔗 Transparency Record</a>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="v-line gap-top"></div>
+
+          <!-- Sub 1.2 -->
+          <div class="sub-row-wrap">
+            <div class="sub-node s3" onclick="toggle(this)">
+              <span>✍️ Automated Drafting &amp; Reporting</span><span class="caret">▶</span>
+            </div>
+            <div class="leaves-grid">
+              <div class="leaves-inner">
+
+                <div class="card">
+                  <div class="card-title">EHCP Assessment Triage</div>
+                  <div class="card-org">West Northamptonshire Council</div>
+                  <div class="card-desc">Accelerating EHCP assessment by automatically identifying obvious cases and providing online consultations for parents. Partnership with Jadu + Microsoft.</div>
+                  <span class="card-tech">ML · AWS · Generative AI</span>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">AI Inspection Writing Assistant</div>
+                  <div class="card-org">Ofsted</div>
+                  <div class="card-desc">Suggests wording for children's home inspection reports based on written evidence. Generative AI using ChatGPT 4.1 Mini on Azure, Python for processing.</div>
+                  <span class="card-tech">GPT-4.1 Mini · Azure · Python</span>
+                  <a class="card-link" href="https://www.gov.uk/algorithmic-transparency-records/ofsted-ai-inspection-writing-assistant" target="_blank">🔗 Transparency Record</a>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="v-line gap-top"></div>
+
+          <!-- Sub 1.3 -->
+          <div class="sub-row-wrap">
+            <div class="sub-node s4" onclick="toggle(this)">
+              <span>🗺️ Intelligent Case Search &amp; Eco-mapping</span><span class="caret">▶</span>
+            </div>
+            <div class="leaves-grid">
+              <div class="leaves-inner">
+
+                <div class="card">
+                  <div class="card-title">Case Management Semantic Search &amp; Eco-mapping</div>
+                  <div class="card-org">North Yorkshire Council</div>
+                  <div class="card-desc">Reduces admin burden by improving information retrieval through advanced search and automatically visualising support networks.</div>
+                  <span class="card-tech">Microsoft Azure AI · RAG · Semantic Search</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /sub-list -->
+      </div><!-- /children-panel -->
+    </div><!-- /branch-col 1 -->
+
+    <!-- ══════════ BRANCH 2 ══════════ -->
+    <div class="branch-col">
+      <div class="branch-node b2" onclick="toggle(this)">
+        <span>🎓 AI for Direct Educational Support &amp; Inclusion</span>
+        <span class="caret">▶</span>
+      </div>
+
+      <div class="children-panel">
+        <div class="v-line"></div>
+        <div class="sub-list">
+
+          <!-- Sub 2.1 -->
+          <div class="sub-row-wrap">
+            <div class="sub-node s2" onclick="toggle(this)">
+              <span>👩‍🏫 Teacher Empowerment Tools</span><span class="caret">▶</span>
+            </div>
+            <div class="leaves-grid">
+              <div class="leaves-inner">
+
+                <div class="card">
+                  <div class="card-title">Aila Lesson Planning Assistant</div>
+                  <div class="card-org">Oak National Academy</div>
+                  <div class="card-desc">Creates personalised lesson resources & plans aligned with the National Curriculum to reduce teacher workload. Uses GPT-4o with RAG over Oak's lesson corpus.</div>
+                  <span class="card-tech">GPT-4o · RAG · Cohere Rerank</span>
+                  <a class="card-link" href="https://www.thenational.academy/blog/introducing-aila-oak-s-ai-lesson-assistant" target="_blank">🔗 Learn more</a>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="v-line gap-top"></div>
+
+          <!-- Sub 2.2 -->
+          <div class="sub-row-wrap">
+            <div class="sub-node s5" onclick="toggle(this)">
+              <span>♿ Accessible Information for Children &amp; Families</span><span class="caret">▶</span>
+            </div>
+            <div class="leaves-grid">
+              <div class="leaves-inner">
+
+                <div class="card">
+                  <div class="card-title">Simply Readable Accessibility Tool</div>
+                  <div class="card-org">Swindon Borough Council</div>
+                  <div class="card-desc">Converts complex documents into accessible "Easy-Read" formats in 75 languages for residents with learning disabilities. Uses Amazon Bedrock RAG for text simplification & image matching.</div>
+                  <span class="card-tech">Amazon Bedrock · RAG · NLP</span>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <div class="v-line gap-top"></div>
+
+          <!-- Sub 2.3 -->
+          <div class="sub-row-wrap">
+            <div class="sub-node s6" onclick="toggle(this)">
+              <span>🚪 Digital Front-Doors &amp; Support Navigation</span><span class="caret">▶</span>
+            </div>
+            <div class="leaves-grid">
+              <div class="leaves-inner">
+
+                <div class="card">
+                  <div class="card-title">Family Hubs Intelligent Automation</div>
+                  <div class="card-org">Halton Borough Council</div>
+                  <div class="card-desc">24/7 "digital front-door" consolidating national & local services for families to self-serve. Conversational AI with RPA and personalised push notifications via Beebot AI.</div>
+                  <span class="card-tech">Beebot AI · RPA · Conversational AI</span>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">SEND Local Offer Navigation</div>
+                  <div class="card-org">West Northamptonshire Council</div>
+                  <div class="card-desc">Consolidates fragmented support information from multiple directories into a single AI-powered search index and "AI snippets" for families navigating the Local Offer.</div>
+                  <span class="card-tech">OpenAI · Logicdialog</span>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">Social Care Finder</div>
+                  <div class="card-org">Social Care Wales</div>
+                  <div class="card-desc">24/7 support helping the public find appropriate social care & childcare qualifications and registration information in Wales.</div>
+                  <span class="card-tech">OpenAI · Logicdialog</span>
+                  <a class="card-link" href="https://socialcare.wales" target="_blank">🔗 socialcare.wales</a>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /sub-list -->
+      </div><!-- /children-panel -->
+    </div><!-- /branch-col 2 -->
+
+  </div><!-- /h-fork -->
+
+</div><!-- /root-wrapper -->
+
+<script>
+  function toggle(el) {
+    el.classList.toggle('open');
+    // find next sibling that is children-panel or leaves-grid
+    let next = el.nextElementSibling;
+    while (next) {
+      if (next.classList.contains('children-panel') || next.classList.contains('leaves-grid')) {
+        next.classList.toggle('open');
+        break;
+      }
+      next = next.nextElementSibling;
+    }
+  }
+
+  // Auto-open root branches on load
+  window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.branch-node').forEach(n => {
+      n.classList.add('open');
+      let next = n.nextElementSibling;
+      while (next) {
+        if (next.classList.contains('children-panel')) {
+          next.classList.add('open');
+          break;
+        }
+        next = next.nextElementSibling;
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
